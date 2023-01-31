@@ -146,7 +146,7 @@ export class AppService {
       const basket = await this.basketModel.findOne({ userID }).exec();
 
       basket.items = basket.items.map((item) => {
-        if (item._id.toString() !== basketItemId) {
+        if (item._id.toString() === basketItemId) {
           item.amount = data.amount;
         }
 

@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { AppResponse, BasketItemDto, FoodDto, FoodEntity } from './app.dto';
+import { AppResponse, BasketItemDto, FoodDto } from './app.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   Basket,
@@ -8,8 +8,10 @@ import {
   BasketItemDocument,
   Food,
   FoodDocument,
+  User,
+  UserDocument,
 } from './schemas';
-import { Model, Schema } from 'mongoose';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class AppService {
@@ -18,6 +20,7 @@ export class AppService {
     @InjectModel(Basket.name) private basketModel: Model<BasketDocument>,
     @InjectModel(BasketItem.name)
     private basketItemModel: Model<BasketItemDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {}
 
   async createFood(data: FoodDto): Promise<AppResponse<FoodDocument>> {
@@ -198,6 +201,24 @@ export class AppService {
       await basket.save();
 
       return { data: basket };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async dropDB(): Promise<AppResponse> {
+    try {
+      // Get all collections
+
+      // Create an array of collection names and drop each collection
+      await Promise.all([
+        this.basketItemModel.deleteMany(),
+        this.basketModel.deleteMany(),
+        this.foodModel.deleteMany(),
+        this.userModel.deleteMany(),
+      ]);
+
+      return { message: 'SUCCESS' };
     } catch (error) {
       throw error;
     }

@@ -125,4 +125,9 @@ export class AppController {
   getAll(): Promise<AppResponse<FoodDocument[]>> {
     return this.appService.getAll();
   }
+
+  @Delete('/drop_db')
+  async dropDB(): Promise<AppResponse> {
+    return this.appService.dropDB();
+  }
 }

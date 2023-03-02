@@ -46,3 +46,30 @@ export class Basket {
 
 export type BasketDocument = HydratedDocument<Basket>;
 export const BasketSchema = SchemaFactory.createForClass(Basket);
+
+export enum UserRoles {
+  USER = 'USER',
+  ADMIN = 'ADMIN',
+}
+@Schema({ timestamps: true })
+export class User {
+  @Prop({ required: true, type: String, unique: true })
+  email: string;
+
+  @Prop({ required: true, type: String })
+  name: string;
+
+  @Prop({ required: true, type: String })
+  password: string;
+
+  @Prop({
+    required: true,
+    type: String,
+    enum: UserRoles,
+    default: UserRoles.USER,
+  })
+  role: UserRoles;
+}
+
+export type UserDocument = HydratedDocument<User>;
+export const UserSchema = SchemaFactory.createForClass(User);

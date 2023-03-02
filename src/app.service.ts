@@ -20,12 +20,54 @@ export class AppService {
     private basketItemModel: Model<BasketItemDocument>,
   ) {}
 
-  async create(data: FoodDto): Promise<AppResponse<FoodDocument>> {
+  async createFood(data: FoodDto): Promise<AppResponse<FoodDocument>> {
     try {
       const food = new this.foodModel(data);
       await food.save();
 
       return { data: food, message: 'Food successfully created.' };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateFood(
+    id: string,
+    data: FoodDto,
+  ): Promise<AppResponse<FoodDocument>> {
+    try {
+      await this.foodModel.findByIdAndUpdate(id, data);
+
+      return {
+        data: await this.foodModel.findById(id),
+        message: 'Food successfully updated.',
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getFoodById(id: string): Promise<AppResponse<FoodDocument>> {
+    try {
+      const food = await this.foodModel.findById(id);
+      if (!food) {
+        throw new HttpException('Food not found.', HttpStatus.NOT_FOUND);
+      }
+
+      return { data: food };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async deleteFoodById(id: string): Promise<AppResponse> {
+    try {
+      const food = await this.foodModel.findByIdAndDelete(id);
+      if (!food) {
+        throw new HttpException('Food not found.', HttpStatus.NOT_FOUND);
+      }
+
+      return { message: 'Food successfully deleted' };
     } catch (error) {
       throw error;
     }

@@ -13,16 +13,59 @@ import {
 } from '@nestjs/common';
 import { AppService } from './app.service';
 import { AppResponse, BasketItemDto, FoodDto } from './app.dto';
-import { BasketDocument, FoodDocument } from './schemas';
+import { BasketDocument, FoodDocument, UserRoles } from './schemas';
+import { AuthService } from './auth/auth.service';
 
 @Controller('')
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+    private readonly authService: AuthService,
+  ) {}
 
   @Post('/foods')
   @UsePipes(ValidationPipe)
-  create(@Body() data: FoodDto): Promise<AppResponse<FoodDocument>> {
-    return this.appService.create(data);
+  async createFood(
+    @Req() req,
+    @Body() data: FoodDto,
+  ): Promise<AppResponse<FoodDocument>> {
+    await this.authService.authorize([UserRoles.ADMIN], req);
+
+    return this.appService.createFood(data);
+  }
+
+  @Put('/foods/:id')
+  @UsePipes(ValidationPipe)
+  async updateFood(
+    @Req() req,
+    @Body() data: FoodDto,
+    @Param('id') foodId: string,
+  ): Promise<AppResponse<FoodDocument>> {
+    await this.authService.authorize([UserRoles.ADMIN], req);
+
+    return this.appService.updateFood(foodId, data);
+  }
+
+  @Get('/foods/:id')
+  @UsePipes(ValidationPipe)
+  async getFoodByID(
+    @Req() req,
+    @Param('id') foodId: string,
+  ): Promise<AppResponse<FoodDocument>> {
+    await this.authService.authorize([UserRoles.ADMIN], req);
+
+    return this.appService.getFoodById(foodId);
+  }
+
+  @Delete('/foods/:id')
+  @UsePipes(ValidationPipe)
+  async deleteFoodByID(
+    @Req() req,
+    @Param('id') foodId: string,
+  ): Promise<AppResponse<FoodDocument>> {
+    await this.authService.authorize([UserRoles.ADMIN], req);
+
+    return this.appService.deleteFoodById(foodId);
   }
 
   @Post('/foods/:foodId/addToBasket')

@@ -12,8 +12,13 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { AppService } from './app.service';
-import { AppResponse, BasketItemDto, FoodDto } from './app.dto';
-import { BasketDocument, FoodDocument, UserRoles } from './schemas';
+import { AppResponse, BasketItemDto, CreateOrderDto, FoodDto } from './app.dto';
+import {
+  BasketDocument,
+  FoodDocument,
+  OrderDocument,
+  UserRoles,
+} from './schemas';
 import { AuthService } from './auth/auth.service';
 
 @Controller('')
@@ -70,60 +75,71 @@ export class AppController {
 
   @Post('/foods/:foodId/addToBasket')
   @UsePipes(ValidationPipe)
-  addToBasket(
+  async addToBasket(
     @Body() data: BasketItemDto,
     @Param('foodId') foodId: string,
     @Req() req,
   ): Promise<AppResponse<BasketDocument>> {
-    if (!req.headers['userid']) {
-      throw new ForbiddenException(
-        'Апей кокуй UserID header ди кошуп жонотуш керек да. Унутуп калдынбы?',
-      );
-    }
+    const user = await this.authService.authorize([UserRoles.USER], req);
 
-    return this.appService.addToBasket(data, foodId, req.headers['userid']);
+    return this.appService.addToBasket(data, foodId, user._id);
   }
 
   @Get('/basket')
-  getById(@Req() req): Promise<AppResponse<BasketDocument>> {
-    if (!req.headers['userid']) {
-      throw new ForbiddenException(
-        'Апей кокуй UserID header ди кошуп жонотуш керек да. Унутуп калдынбы?',
-      );
-    }
-    return this.appService.getBasket(req.headers['userid']);
+  async getById(@Req() req): Promise<AppResponse<BasketDocument>> {
+    const user = await this.authService.authorize([UserRoles.USER], req);
+
+    return this.appService.getBasket(user._id);
   }
 
   @Delete('/basketItem/:id/delete')
-  deleteBasketItem(
+  async deleteBasketItem(
     @Req() req,
     @Param('id') id: string,
   ): Promise<AppResponse<BasketDocument>> {
-    if (!req.headers['userid']) {
-      throw new ForbiddenException(
-        'Апей кокуй UserID header ди кошуп жонотуш керек да. Унутуп калдынбы?',
-      );
-    }
-    return this.appService.deleteBasketItem(req.headers['userid'], id);
+    const user = await this.authService.authorize([UserRoles.USER], req);
+
+    return this.appService.deleteBasketItem(user._id, id);
   }
 
   @Put('/basketItem/:id/update')
-  updateBasketItem(
+  async updateBasketItem(
     @Req() req,
     @Param('id') id: string,
     @Body() data: BasketItemDto,
   ): Promise<AppResponse<BasketDocument>> {
-    if (!req.headers['userid']) {
-      throw new ForbiddenException(
-        'Апей кокуй UserID header ди кошуп жонотуш керек да. Унутуп калдынбы?',
-      );
-    }
-    return this.appService.updateBasketItem(req.headers['userid'], id, data);
+    const user = await this.authService.authorize([UserRoles.USER], req);
+
+    return this.appService.updateBasketItem(user._id, id, data);
   }
 
   @Get('/foods')
   getAll(): Promise<AppResponse<FoodDocument[]>> {
-    return this.appService.getAll();
+    return this.appService.getAllFoods();
+  }
+
+  @Get('/orders/all')
+  async getAllOrders(@Req() req): Promise<AppResponse<OrderDocument[]>> {
+    await this.authService.authorize([UserRoles.ADMIN], req);
+
+    return this.appService.getAllOrders();
+  }
+
+  @Get('/orders')
+  async getOrders(@Req() req): Promise<AppResponse<OrderDocument[]>> {
+    const user = await this.authService.authorize([UserRoles.USER], req);
+
+    return this.appService.getOrders(user._id);
+  }
+
+  @Post('/orders')
+  async createOrder(
+    @Req() req,
+    @Body() data: CreateOrderDto,
+  ): Promise<AppResponse> {
+    const user = await this.authService.authorize([UserRoles.USER], req);
+
+    return this.appService.createOrder(user, data);
   }
 
   @Delete('/drop_db')

@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { HydratedDocument, Types, ObjectId } from 'mongoose';
+import mongoose, { HydratedDocument, ObjectId } from 'mongoose';
 
 export type FoodDocument = HydratedDocument<Food>;
 
@@ -28,8 +28,8 @@ export class BasketItem {
   @Prop({ required: true, type: Number, default: 0 })
   price: number;
 
-  @Prop({ required: true, type: mongoose.Schema.Types.ObjectId })
-  foodId: ObjectId;
+  @Prop({ required: true, type: mongoose.Schema.Types.ObjectId, ref: 'Food' })
+  food: FoodDocument;
 }
 
 export const BasketItemSchema = SchemaFactory.createForClass(BasketItem);
@@ -37,8 +37,8 @@ export type BasketItemDocument = HydratedDocument<BasketItem>;
 
 @Schema({ timestamps: true })
 export class Basket {
-  @Prop({ required: true, type: String, unique: true })
-  userID: string;
+  @Prop({ required: true, type: mongoose.Schema.Types.ObjectId, unique: true })
+  userID: ObjectId;
 
   @Prop({ required: true, type: [BasketItemSchema] })
   items: BasketItemDocument[];
@@ -73,3 +73,22 @@ export class User {
 
 export type UserDocument = HydratedDocument<User>;
 export const UserSchema = SchemaFactory.createForClass(User);
+
+@Schema({ timestamps: true })
+export class Order {
+  @Prop({
+    required: true,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  })
+  user: UserDocument;
+
+  @Prop({ required: true, type: [BasketItemSchema] })
+  items: BasketItemDocument[];
+
+  @Prop({ required: true, type: Number, default: 0 })
+  totalPrice: number;
+}
+
+export type OrderDocument = HydratedDocument<Order>;
+export const OrderSchema = SchemaFactory.createForClass(Order);

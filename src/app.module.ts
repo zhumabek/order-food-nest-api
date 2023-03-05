@@ -9,6 +9,8 @@ import {
   BasketSchema,
   Food,
   FoodSchema,
+  Order,
+  OrderSchema,
   User,
   UserSchema,
 } from './schemas';
@@ -26,6 +28,7 @@ import { JwtModule } from '@nestjs/jwt';
       { name: BasketItem.name, schema: BasketItemSchema },
     ]),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([{ name: Order.name, schema: OrderSchema }]),
 
     JwtModule.register(JWT_CONFIG),
     AuthModule,

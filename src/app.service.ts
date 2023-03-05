@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { AppResponse, BasketItemDto, FoodDto } from './app.dto';
+import { AppResponse, BasketItemDto, CreateOrderDto, FoodDto } from './app.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   Basket,
@@ -8,10 +8,12 @@ import {
   BasketItemDocument,
   Food,
   FoodDocument,
+  Order,
+  OrderDocument,
   User,
   UserDocument,
 } from './schemas';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 @Injectable()
 export class AppService {
@@ -21,6 +23,7 @@ export class AppService {
     @InjectModel(BasketItem.name)
     private basketItemModel: Model<BasketItemDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
   ) {}
 
   async createFood(data: FoodDto): Promise<AppResponse<FoodDocument>> {
@@ -79,7 +82,7 @@ export class AppService {
   async addToBasket(
     data: BasketItemDto,
     foodId: string,
-    userID: string,
+    userID: Types.ObjectId,
   ): Promise<AppResponse<BasketDocument>> {
     try {
       const basket = await this.basketModel.findOne({ userID }).exec();
@@ -89,7 +92,7 @@ export class AppService {
           title: food.title,
           amount: data.amount,
           price: food.price,
-          foodId: food._id,
+          food: food,
         });
 
         const newBasket = new this.basketModel({
@@ -106,9 +109,9 @@ export class AppService {
 
       const food = await this.foodModel.findById(foodId);
 
-      if (basket.items.find((item) => item.foodId.toString() === foodId)) {
+      if (basket.items.find((item) => item.food._id === food._id)) {
         basket.items = basket.items.map((item) => {
-          if (item.foodId.toString() === foodId) {
+          if (item.food._id === food._id) {
             item.amount += data.amount;
           }
 
@@ -120,7 +123,7 @@ export class AppService {
             title: food.title,
             amount: data.amount,
             price: food.price,
-            foodId: food._id,
+            food: food,
           }),
         );
       }
@@ -133,7 +136,7 @@ export class AppService {
     }
   }
 
-  async getAll(): Promise<AppResponse<FoodDocument[]>> {
+  async getAllFoods(): Promise<AppResponse<FoodDocument[]>> {
     try {
       const foods = await this.foodModel.find().exec();
       return { data: foods };
@@ -142,9 +145,14 @@ export class AppService {
     }
   }
 
-  async getBasket(userID: string): Promise<AppResponse<BasketDocument>> {
+  async getBasket(
+    userID: Types.ObjectId,
+  ): Promise<AppResponse<BasketDocument>> {
     try {
-      const basket = await this.basketModel.findOne({ userID }).exec();
+      const basket = await this.basketModel
+        .findOne({ userID })
+        .populate(['items.food'])
+        .exec();
 
       if (!basket) {
         const newBasket = new this.basketModel({
@@ -164,7 +172,7 @@ export class AppService {
   }
 
   async deleteBasketItem(
-    userID: string,
+    userID: Types.ObjectId,
     basketItemId: string,
   ): Promise<AppResponse<BasketDocument>> {
     try {
@@ -183,7 +191,7 @@ export class AppService {
   }
 
   async updateBasketItem(
-    userID: string,
+    userID: Types.ObjectId,
     basketItemId: string,
     data: BasketItemDto,
   ): Promise<AppResponse<BasketDocument>> {
@@ -201,6 +209,57 @@ export class AppService {
       await basket.save();
 
       return { data: basket };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getAllOrders(): Promise<AppResponse<OrderDocument[]>> {
+    try {
+      const orders = await this.orderModel
+        .find({})
+        .populate(['items.food'])
+        .populate('user', 'name')
+
+        .exec();
+      return { data: orders };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getOrders(
+    userId: Types.ObjectId,
+  ): Promise<AppResponse<OrderDocument[]>> {
+    try {
+      const orders = await this.orderModel
+        .find({ user: await this.userModel.findById(userId) })
+        .populate(['items.food'])
+        .exec();
+      return { data: orders };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async createOrder(
+    user: UserDocument,
+    data: CreateOrderDto,
+  ): Promise<AppResponse> {
+    try {
+      const basket = await this.basketModel
+        .findOne({ userID: user._id })
+        .exec();
+
+      const order = new this.orderModel({
+        user,
+        totalPrice: data.totalPrice,
+        items: basket.items,
+      });
+
+      await order.save();
+
+      return { message: 'Order successfully created!' };
     } catch (error) {
       throw error;
     }

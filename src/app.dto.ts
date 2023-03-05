@@ -21,6 +21,12 @@ export class BasketItemDto {
   amount: number;
 }
 
+export class CreateOrderDto {
+  @IsNotEmpty()
+  @IsNumber()
+  totalPrice: number;
+}
+
 export class FoodEntity {
   _id: string;
   title: string;

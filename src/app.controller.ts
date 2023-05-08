@@ -29,7 +29,7 @@ export class AppController {
     @Req() req,
     @Body() data: FoodDto,
   ): Promise<AppResponse<FoodDocument>> {
-    await this.authService.authorize([UserRoles.ADMIN], req);
+    // await this.authService.authorize([UserRoles.ADMIN], req);
 
     return this.appService.createFood(data);
   }
@@ -41,7 +41,7 @@ export class AppController {
     @Body() data: FoodDto,
     @Param('id') foodId: string,
   ): Promise<AppResponse<FoodDocument>> {
-    await this.authService.authorize([UserRoles.ADMIN], req);
+    // await this.authService.authorize([UserRoles.ADMIN], req);
 
     return this.appService.updateFood(foodId, data);
   }
@@ -52,7 +52,7 @@ export class AppController {
     @Req() req,
     @Param('id') foodId: string,
   ): Promise<AppResponse<FoodDocument>> {
-    await this.authService.authorize([UserRoles.ADMIN], req);
+    // await this.authService.authorize([UserRoles.ADMIN], req);
 
     return this.appService.getFoodById(foodId);
   }
@@ -63,7 +63,7 @@ export class AppController {
     @Req() req,
     @Param('id') foodId: string,
   ): Promise<AppResponse<FoodDocument>> {
-    await this.authService.authorize([UserRoles.ADMIN], req);
+    // await this.authService.authorize([UserRoles.ADMIN], req);
 
     return this.appService.deleteFoodById(foodId);
   }
